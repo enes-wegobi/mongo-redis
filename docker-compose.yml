@@ -19,6 +19,7 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
+    profiles: ["full", "db"]
 
   notification-mongo:
     image: mongo:latest
@@ -39,6 +40,7 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
+    profiles: ["full", "db"]
 
   trip-mongo:
     image: mongo:latest
@@ -59,6 +61,7 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
+    profiles: ["full", "db"]
 
   redis:
     image: redis:latest
@@ -75,6 +78,7 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
+    profiles: ["full", "db"]
 
   sober-user-api:
     build:
@@ -107,6 +111,7 @@ services:
           memory: 300M
           cpus: '0.3'
     restart: unless-stopped
+    profiles: ["full", "user-api"]
 
 networks:
   sober-network:
