@@ -1,0 +1,50 @@
+services:
+  user-mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - user-mongo-data:/data/db
+    command: mongod --auth
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret123
+      - MONGO_INITDB_DATABASE=user_db
+
+  notification-mongo:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - notification-mongo-data:/data/db
+    command: mongod --auth
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret123
+      - MONGO_INITDB_DATABASE=notification_db
+
+  trip-mongo:
+    image: mongo:latest
+    ports:
+      - "27019:27017"
+    volumes:
+      - trip-mongo-data:/data/db
+    command: mongod --auth
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret123
+      - MONGO_INITDB_DATABASE=trip_db
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --requirepass secret456
+
+volumes:
+  user-mongo-data:
+  notification-mongo-data:
+  trip-mongo-data:
+  redis-data:
