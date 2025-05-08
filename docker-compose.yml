@@ -19,7 +19,6 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
-    profiles: ["full", "db"]
 
   notification-mongo:
     image: mongo:latest
@@ -27,7 +26,7 @@ services:
       - "${NOTIFICATION_MONGO_PORT:-27018}:27017"
     volumes:
       - notification-mongo-data:/data/db
-    command: mongod --auth --wiredTigerCacheSizeGB=0.25
+    command: mongod --auth --bind_ip_all --wiredTigerCacheSizeGB=0.25
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${NOTIFICATION_MONGO_USERNAME:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${NOTIFICATION_MONGO_PASSWORD:-secure_password}
@@ -40,7 +39,6 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
-    profiles: ["full", "db"]
 
   trip-mongo:
     image: mongo:latest
@@ -61,7 +59,26 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
-    profiles: ["full", "db"]
+
+  promotion-mongo:
+    image: mongo:latest
+    ports:
+      - "${PROMOTION_MONGO_PORT:-27020}:27017"
+    volumes:
+      - promotion-mongo-data:/data/db
+    command: mongod --auth --wiredTigerCacheSizeGB=0.25
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${PROMOTION_MONGO_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${PROMOTION_MONGO_PASSWORD:-secure_password}
+      - MONGO_INITDB_DATABASE=${PROMOTION_MONGO_DB:-promotion}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.4'
+    networks:
+      - sober-network
+    restart: unless-stopped
 
   redis:
     image: redis:latest
@@ -78,29 +95,15 @@ services:
     networks:
       - sober-network
     restart: unless-stopped
-    profiles: ["full", "db"]
 
-  sober-user-api:
+  customer-api-gateway:
     build:
-      context: ./sober-user-api
-      dockerfile: Dockerfile
-    container_name: sober-user-api
+      context: ../customer-api-gateway
+      dockerfile: dockerfile
     ports:
-      - "${USER_API_PORT:-3000}:3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3000
-      - MONGODB_URI=${USER_MONGODB_URI:-mongodb://${USER_MONGO_USERNAME:-admin}:${USER_MONGO_PASSWORD:-secure_password}@user-mongo:27017/${USER_MONGO_DB:-sober-user}?authSource=admin}
-      - MONGODB_USER=${USER_MONGO_USERNAME:-admin}
-      - MONGODB_PASSWORD=${USER_MONGO_PASSWORD:-secure_password}
-      - JWT_SECRET=${JWT_SECRET:-your_super_secret_key_here}
-      - NOTIFICATION_API_URL=${NOTIFICATION_API_URL:-http://notification-api:3001}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION:-eu-central-1}
-      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME:-sober-user-uploads}
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:8080}
-      - NODE_OPTIONS=--max-old-space-size=256
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    env_file:
+      - ../customer-api-gateway/.env
     depends_on:
       - user-mongo
     networks:
@@ -108,10 +111,47 @@ services:
     deploy:
       resources:
         limits:
-          memory: 300M
-          cpus: '0.3'
+          memory: 256M
+          cpus: '0.5'
     restart: unless-stopped
-    profiles: ["full", "user-api"]
+
+  user-api:
+    build:
+      context: ../sober-user-api
+      dockerfile: Dockerfile
+    ports:
+      - "${USER_API_PORT:-3001}:3001"
+    env_file:
+      - ../sober-user-api/.env.docker
+    depends_on:
+      - user-mongo
+      - redis
+    networks:
+      - sober-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    restart: unless-stopped
+  promotion-api:
+    build:
+      context: ../1drive-promotion-api
+      dockerfile: Dockerfile
+    ports:
+      - "${PROMOTION_API_PORT:-3002}:3000"
+    environment:
+      - ../1drive-promotion-api/.env.docker
+    depends_on:
+      - promotion-mongo
+    networks:
+      - sober-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    restart: unless-stopped
 
 networks:
   sober-network:
