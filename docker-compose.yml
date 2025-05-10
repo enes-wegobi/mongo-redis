@@ -154,6 +154,25 @@ services:
           cpus: '0.5'
     restart: unless-stopped
 
+  trip-api:
+    build:
+      context: ../sober-trip-api
+      dockerfile: Dockerfile
+    ports:
+      - "${PROMOTION_API_PORT:-3003}:3000"
+    env_file:
+      - ../sober-trip-api/.env.docker
+    depends_on:
+      - user-mongo
+    networks:
+      - sober-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    restart: unless-stopped
+
 networks:
   sober-network:
     driver: bridge
