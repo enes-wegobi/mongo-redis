@@ -134,16 +134,17 @@ services:
           memory: 256M
           cpus: '0.5'
     restart: unless-stopped
+
   promotion-api:
     build:
       context: ../1drive-promotion-api
       dockerfile: Dockerfile
     ports:
       - "${PROMOTION_API_PORT:-3002}:3000"
-    environment:
+    env_file:
       - ../1drive-promotion-api/.env.docker
     depends_on:
-      - promotion-mongo
+      - user-mongo
     networks:
       - sober-network
     deploy:
@@ -163,3 +164,4 @@ volumes:
   notification-mongo-data:
   trip-mongo-data:
   redis-data:
+  promotion-mongo-data:
