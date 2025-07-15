@@ -1,0 +1,70 @@
+services:
+  1driver-main-api:
+    build:
+      context: ../1driver-main-api
+      dockerfile: dockerfile
+    ports:
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    env_file:
+      - ../1driver-main-api/.env
+    depends_on:
+      - 1driver-user-api
+      - 1driver-promotion-api
+    networks:
+      - 1driver-network
+    volumes:
+      - ./logs/1driver-main-api:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 5956M
+          cpus: '2.91'
+    restart: unless-stopped
+
+  1driver-user-api:
+    build:
+      context: ../1driver-user-api
+      dockerfile: Dockerfile
+    ports:
+      - "${USER_API_PORT:-3001}:3001"
+    env_file:
+      - ../1driver-user-api/.env.docker
+    networks:
+      - 1driver-network
+    volumes:
+      - ./logs/1driver-user-api:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 1489M
+          cpus: '0.73'
+    restart: unless-stopped
+
+  1driver-promotion-api:
+    build:
+      context: ../1driver-promotion-api
+      dockerfile: Dockerfile
+    ports:
+      - "${PROMOTION_API_PORT:-3002}:3000"
+    env_file:
+      - ../1driver-promotion-api/.env.docker
+    networks:
+      - 1driver-network
+    volumes:
+      - ./logs/1driver-promotion-api:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 745M
+          cpus: '0.36'
+    restart: unless-stopped
+
+networks:
+  1driver-network:
+    driver: bridge
+    name: 1driver-network
+
+volumes:
+  1driver-main-api-logs:
+  1driver-promotion-api-logs:
+  1driver-user-api-logs:
