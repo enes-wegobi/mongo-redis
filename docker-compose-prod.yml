@@ -28,7 +28,7 @@ services:
     ports:
       - "${USER_API_PORT:-3001}:3001"
     env_file:
-      - ../1driver-user-api/.env.docker
+      - ../1driver-user-api/.env
     networks:
       - 1driver-network
     volumes:
@@ -47,7 +47,7 @@ services:
     ports:
       - "${PROMOTION_API_PORT:-3002}:3000"
     env_file:
-      - ../1driver-promotion-api/.env.docker
+      - ../1driver-promotion-api/.env
     networks:
       - 1driver-network
     volumes:
