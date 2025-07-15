@@ -7,13 +7,10 @@ services:
       - "${API_GATEWAY_PORT:-3000}:3000"
     env_file:
       - ../1driver-main-api/.env
-    depends_on:
-      - 1driver-user-api
-      - 1driver-promotion-api
     networks:
       - 1driver-network
     volumes:
-      - ./logs/1driver-main-api:/app/logs
+      - ./logs/1driver-main-api:/app/logs:rw
     deploy:
       resources:
         limits:
@@ -32,7 +29,7 @@ services:
     networks:
       - 1driver-network
     volumes:
-      - ./logs/1driver-user-api:/app/logs
+      - ./logs/1driver-user-api:/app/logs:rw
     deploy:
       resources:
         limits:
@@ -42,16 +39,16 @@ services:
 
   1driver-promotion-api:
     build:
-      context: ../1driver-promotion-api
+      context: ../1drive-promotion-api
       dockerfile: Dockerfile
     ports:
       - "${PROMOTION_API_PORT:-3002}:3000"
     env_file:
-      - ../1driver-promotion-api/.env
+      - ../1drive-promotion-api/.env
     networks:
       - 1driver-network
     volumes:
-      - ./logs/1driver-promotion-api:/app/logs
+      - ./logs/1driver-promotion-api:/app/logs:rw
     deploy:
       resources:
         limits:
@@ -63,8 +60,3 @@ networks:
   1driver-network:
     driver: bridge
     name: 1driver-network
-
-volumes:
-  1driver-main-api-logs:
-  1driver-promotion-api-logs:
-  1driver-user-api-logs:
