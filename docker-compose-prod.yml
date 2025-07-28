@@ -1,8 +1,18 @@
 services:
+  traefik-setup:
+    image: alpine
+    volumes:
+      - ./traefik/acme:/acme
+    command: >
+      sh -c "touch /acme/acme.json && chmod 600 /acme/acme.json"
+    restart: "no"
+    
   traefik:
     image: traefik:v3.5
     container_name: traefik
     restart: unless-stopped
+    depends_on:
+      - traefik-setup
     ports:
       - "80:80"
       - "443:443"
@@ -20,7 +30,6 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       - --certificatesresolvers.letsencrypt.acme.email=enes@wegobi.studio
       - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
       - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
