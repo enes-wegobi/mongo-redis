@@ -1,10 +1,36 @@
 services:
+  traefik:
+    image: traefik:v3.5
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+      - ./traefik/acme:/acme
+    networks:
+      - 1driver-network
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=enes@wegobi.studio
+      - --certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
   1driver-main-api:
     build:
       context: ../1driver-main-api
       dockerfile: dockerfile
-    ports:
-      - "${API_GATEWAY_PORT:-3000}:3000"
+    expose:
+      - "3000"
     env_file:
       - ../1driver-main-api/.env
     networks:
@@ -17,13 +43,24 @@ services:
           memory: 5956M
           cpus: '2.91'
     restart: unless-stopped
+    user: root
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.1driver.app`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+      - "traefik.http.routers.api-redirect.rule=Host(`api.1driver.app`)"
+      - "traefik.http.routers.api-redirect.entrypoints=web"
+      - "traefik.http.routers.api-redirect.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
   1driver-user-api:
     build:
       context: ../1driver-user-api
       dockerfile: Dockerfile
-    ports:
-      - "${USER_API_PORT:-3001}:3001"
+    expose:
+      - "3001"
     env_file:
       - ../1driver-user-api/.env
     networks:
@@ -36,13 +73,15 @@ services:
           memory: 1489M
           cpus: '0.73'
     restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
 
   1driver-promotion-api:
     build:
       context: ../1drive-promotion-api
       dockerfile: Dockerfile
-    ports:
-      - "${PROMOTION_API_PORT:-3002}:3000"
+    expose:
+      - "3000"
     env_file:
       - ../1drive-promotion-api/.env
     networks:
@@ -55,6 +94,8 @@ services:
           memory: 745M
           cpus: '0.36'
     restart: unless-stopped
+    labels:
+      - "traefik.enable=false"
 
 networks:
   1driver-network:
